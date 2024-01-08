@@ -7,10 +7,14 @@ import * as bcrypt from 'bcrypt';
 import { BaseResult } from 'src/utils/result/base-result';
 import { SuccessResult } from 'src/utils/result/success-result';
 import { ErrorResult } from 'src/utils/result/error-result';
+import { LoginUserDto } from './dto/login-user-dto';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User.name) private readonly userModel: Model<User>) { }
+    constructor(@InjectModel(User.name) private readonly userModel: Model<User>,
+    private jwtService: JwtService) { }
 
     async create(createUserDto: CreateUserDto): Promise<BaseResult> {
         const { name, password, email } = createUserDto;
@@ -35,6 +39,26 @@ export class AuthService {
             return new SuccessResult('All users fetched', result);
         } catch (error) {
             return new ErrorResult('Error occured getting all users. ' + error, error);
+        }
+    }
+
+    async login(loginUserDto: LoginUserDto) : Promise<BaseResult> {
+        const {email} = loginUserDto;
+        try {
+            const user = await this.userModel.findOne({email: email}).exec();
+            if(!user){
+                return new ErrorResult(`${email} doesn't exist on the system`, null);
+            }
+            if (user && (await bcrypt.compare(loginUserDto.password, user.password))) {
+                const payload = { id: user._id, email: user.email, username: user.name };
+          
+                const accessToken = await this.jwtService.signAsync(payload)
+                return new SuccessResult("Login successfull", {accessToken: accessToken, user: user, isPasswordMatches: true});
+              } else {
+                return new ErrorResult("Please check your login credentials", {user: null});
+              }
+        } catch (error) {
+            return new ErrorResult("Error occured on login.", error);
         }
     }
 }
