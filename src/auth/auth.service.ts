@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { User } from 'src/schemas/user.schema';
-import { CreateUserDto } from './dto/create-user-dto';
-import * as bcrypt from 'bcrypt';
 import { BaseResult } from 'src/utils/result/base-result';
-import { SuccessResult } from 'src/utils/result/success-result';
 import { ErrorResult } from 'src/utils/result/error-result';
+import { SuccessResult } from 'src/utils/result/success-result';
+import { CreateUserDto } from './dto/create-user-dto';
 import { LoginUserDto } from './dto/login-user-dto';
-import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from './jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
