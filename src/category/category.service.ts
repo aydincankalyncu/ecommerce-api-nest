@@ -23,6 +23,19 @@ export class CategoryService {
     }
   }
 
+  async getCategoryById(id: string) : Promise<BaseResult> {
+    try {
+      const category = await this.categoryModel.findById(id).exec();
+      if(!category)
+      {
+        return new ErrorResult("There is no category", id);
+      }
+      return new SuccessResult("Success", category);
+    } catch (error) {
+      return new ErrorResult("Error occured on getting category by id", error);
+    }
+  }
+
   async saveCategory(
     createCategoryDto: CreateCategoryDto,
   ): Promise<BaseResult> {
