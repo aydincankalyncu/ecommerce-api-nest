@@ -35,10 +35,7 @@ export class ContactService {
     //Delete contact by id
     async deleteContactById(contactId: string): Promise<BaseResult>{
         try {
-            const deletedContact = await this.contactModel.findByIdAndRemove(contactId).exec();
-            if(!deletedContact){
-                return new ErrorResult("Contact not found on the system", contactId);
-            }
+            const deletedContact = await this.contactModel.findByIdAndDelete(contactId);
             return new SuccessResult("Success", deletedContact);
         } catch (error) {
             return new ErrorResult("Error occured on deleting contact", error);

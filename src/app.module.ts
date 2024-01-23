@@ -10,6 +10,7 @@ import { ContactModule } from './contact/contact.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { join } from 'path';
       rootPath: join(__dirname, '..', 'uploads'),
     }),
     ConfigModule.forRoot({ isGlobal: true }),
-    MongooseModule.forRoot(process.env.MONGO_URL), AuthModule, CategoryModule, ProductModule, ContactModule],
+    MongooseModule.forRoot(process.env.MONGO_URL), AuthModule, CategoryModule, ProductModule, ContactModule, OrderModule],
   controllers: [AppController],
   providers: [AppService],
 })
