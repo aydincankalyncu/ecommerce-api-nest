@@ -7,6 +7,7 @@ import { ErrorResult } from 'src/utils/result/error-result';
 import { SuccessResult } from 'src/utils/result/success-result';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { Category } from 'src/schemas/category.schema';
 
 @Injectable()
 export class ProductService {
@@ -15,7 +16,7 @@ export class ProductService {
     // Get all products
     async getAll(): Promise<BaseResult>{
         try {
-            const products = await this.productModel.find().exec();
+            const products = await this.productModel.find().populate('category').exec();
             return new SuccessResult("Success", products);
         } catch (error) {
             return new ErrorResult("Error occured on getting products", error);
@@ -38,7 +39,9 @@ export class ProductService {
     // Get product by id
     async getProductById(productId: string) : Promise<BaseResult>{
         try {
-            const product = await this.productModel.findById(productId).exec();
+            const test = await this.productModel.findById(productId).populate('category').exec();
+            console.log("Test: ", test);
+            const product = await  this.productModel.findById(productId).populate('category').exec();
             if(!product){
                 return new ErrorResult("There is no product with this id", productId);
             }
@@ -51,7 +54,7 @@ export class ProductService {
     // Get products by category
     async getProductsByCategory(categoryId: string): Promise<BaseResult> {
         try {
-            const products = await this.productModel.find({category: categoryId}).exec();
+            const products = await this.productModel.find({ category: categoryId }).populate('category').exec();
             return new SuccessResult("Success", products);
         } catch (error) {
             return new ErrorResult("Error occured getting products by category", error);
@@ -59,11 +62,15 @@ export class ProductService {
     }
 
     //Update product
-    async updateProduct(productId: string, updateProductDto: UpdateProductDto): Promise<BaseResult>{
+    async updateProduct(productId: string, files: Express.Multer.File[], updateProductDto: UpdateProductDto): Promise<BaseResult>{
         try {
             const existingProduct = await this.productModel.findById(productId).exec();
             if(!existingProduct){
                 return new ErrorResult("There is no product with this id", productId);
+            }
+            if(files && files.length > 0) {
+                const images = files.map((file) => file.buffer.toString('base64')).join(',');
+                existingProduct.images = images;
             }
             Object.assign(existingProduct, updateProductDto);
             const updatedProduct = await existingProduct.save();
@@ -74,13 +81,27 @@ export class ProductService {
     }
 
     //Create product
-    async createProduct(createProductDto: CreateProductDto): Promise<BaseResult>{
+    async createProduct(files: Express.Multer.File[], createProductDto: CreateProductDto): Promise<BaseResult>{
         try {
+            if(files && files.length > 0){
+                const base64Images = files.map((file) => file.buffer.toString('base64'));
+                createProductDto.images = base64Images.join(',');
+            }
             const newProduct = new this.productModel(createProductDto);
             const createdProduct = await newProduct.save();
             return new SuccessResult("Success", createdProduct);
         } catch (error) {
             return new ErrorResult("Error occured on create product", error);
+        }
+    }
+
+    //Delete product
+    async deleteProduct(id: string) : Promise<BaseResult>{
+        try {
+            const deletedProduct = await this.productModel.findByIdAndDelete(id);
+            return new SuccessResult("Success", deletedProduct);
+        } catch (error) {
+            return new ErrorResult('Error occured on delete product', error);
         }
     }
 }

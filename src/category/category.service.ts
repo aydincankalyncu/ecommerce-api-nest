@@ -7,6 +7,7 @@ import { ErrorResult } from 'src/utils/result/error-result';
 import { SuccessResult } from 'src/utils/result/success-result';
 import { CreateCategoryDto } from './dto/create-category-dto';
 import { UpdateCategoryDto } from './dto/update-category-dto';
+import * as fs from 'fs';
 
 @Injectable()
 export class CategoryService {
@@ -37,11 +38,16 @@ export class CategoryService {
   }
 
   async saveCategory(
+    file: Express.Multer.File,
     createCategoryDto: CreateCategoryDto,
   ): Promise<BaseResult> {
-    const { name, imageUrls } = createCategoryDto;
-    const savedCategory = new this.categoryModel({ name, image: imageUrls });
+    const { name, isActive } = createCategoryDto;
+    let data = "";
     try {
+      if(file){
+        data = file.buffer.toString('base64');
+      }
+      const savedCategory = new this.categoryModel({ name, image: data, isActive });
       savedCategory.save();
       return new SuccessResult(`Category ${name} created`, savedCategory);
     } catch (error) {
@@ -50,9 +56,10 @@ export class CategoryService {
   }
 
   async updateCategory(
+    file: Express.Multer.File,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<BaseResult> {
-    const { categoryId, categoryName, imageUrls, isActive } = updateCategoryDto;
+    const { categoryId, categoryName, imageUrl, isActive } = updateCategoryDto;
     try {
       const updatedCategory = await this.categoryModel
         .findById(categoryId)
@@ -63,8 +70,10 @@ export class CategoryService {
       if (categoryName) {
         updatedCategory.name = categoryName;
       }
-      if (imageUrls) {
-        updatedCategory.image = imageUrls;
+      if(file) 
+      {
+        const base64Image = file.buffer.toString('base64');
+        updatedCategory.image = base64Image;
       }
       if (isActive != null) {
         updatedCategory.isActive = isActive;
@@ -79,14 +88,10 @@ export class CategoryService {
     }
   }
 
-  async deleteCategory(name: string): Promise<BaseResult> {
+  async deleteCategory(id: string): Promise<BaseResult> {
     try {
-      const category = await this.categoryModel.findOne({ name });
-      if (!category) {
-        return new ErrorResult('There is no category with this name', name);
-      }
-      await this.categoryModel.deleteOne({ name });
-      return new SuccessResult('Success', category);
+      const deletedCategory = await this.categoryModel.findByIdAndDelete(id);
+      return new SuccessResult("Success", deletedCategory);
     } catch (error) {
       return new ErrorResult('Error occured on delete category', error);
     }

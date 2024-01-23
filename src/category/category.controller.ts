@@ -7,14 +7,15 @@ import {
   Post,
   Put,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { BaseResult } from 'src/utils/result/base-result';
 import { CategoryService } from './category.service';
-import { UpdateCategoryDto } from './dto/update-category-dto';
 import { CreateCategoryDto } from './dto/create-category-dto';
+import { UpdateCategoryDto } from './dto/update-category-dto';
+
 
 @Controller('categories')
 export class CategoryController {
@@ -26,44 +27,32 @@ export class CategoryController {
   }
 
   @Post()
-  async saveCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<BaseResult> {
-    return this.categoryService.saveCategory(createCategoryDto);
+  @UseInterceptors(FileInterceptor('file'))
+  async saveCategory(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() createCategoryDto: CreateCategoryDto,
+  ): Promise<BaseResult> {
+    return this.categoryService.saveCategory(file, createCategoryDto);
   }
 
   @Put(':id')
+  @UseInterceptors(FileInterceptor('file'))
   async updateCategory(
     @Param('id') categoryId: string,
+    @UploadedFile() file: Express.Multer.File,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ): Promise<BaseResult> {
     updateCategoryDto.categoryId = categoryId;
-    return this.categoryService.updateCategory(updateCategoryDto);
+    return this.categoryService.updateCategory(file, updateCategoryDto);
   }
 
-  @Delete(':name')
-  async deleteCategory(@Param('name') name: string): Promise<BaseResult> {
-    return this.categoryService.deleteCategory(name);
+  @Delete(':id')
+  async deleteCategory(@Param('id') id: string): Promise<BaseResult> {
+    return this.categoryService.deleteCategory(id);
   }
 
   @Get(':id')
   async getCategoryById(@Param('id') categoryId: string): Promise<BaseResult> {
     return this.categoryService.getCategoryById(categoryId);
-  }
-
-  @Post('upload')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: 'public/img',
-        filename: (req, file, cb) => {
-          cb(null, file.originalname);
-        },
-      }),
-    }),
-  )
-  async uploadCategoryImage(@UploadedFile() file: Express.Multer.File) {
-    return {
-      statusCode: 200,
-      data: file.path,
-    };
   }
 }

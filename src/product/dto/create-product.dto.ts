@@ -5,5 +5,5 @@ export class CreateProductDto {
     stockAmount: number;
     description?: string;
     images: string;
-    categoryId: string;
+    category: string;
   }
