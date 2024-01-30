@@ -37,21 +37,31 @@ export class CategoryService {
     }
   }
 
+  
   async saveCategory(
     file: Express.Multer.File,
     createCategoryDto: CreateCategoryDto,
   ): Promise<BaseResult> {
     const { name, isActive } = createCategoryDto;
-    let data = "";
     try {
-      if(file){
-        data = file.buffer.toString('base64');
+      let image = ''; // Resmin adını başlangıçta boş bir string olarak tanımla
+
+      if (file) {
+        // Resmi uploads klasörüne kaydet
+        const imagePath = `uploads/${file.originalname}`;
+        image = imagePath;
+
+        // Resmi kaydetme işlemi
+        await this.saveImage(file, imagePath);
       }
-      const savedCategory = new this.categoryModel({ name, image: data, isActive });
-      savedCategory.save();
+
+      // Veritabanına kaydet
+      const savedCategory = new this.categoryModel({ name, image, isActive });
+      await savedCategory.save();
+
       return new SuccessResult(`Category ${name} created`, savedCategory);
     } catch (error) {
-      return new ErrorResult('Error occured on create category', error);
+      return new ErrorResult('Error occurred on create category', error);
     }
   }
 
@@ -95,5 +105,17 @@ export class CategoryService {
     } catch (error) {
       return new ErrorResult('Error occured on delete category', error);
     }
+  }
+
+  private async saveImage(file: Express.Multer.File, imagePath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      require('fs').writeFile(imagePath, file.buffer, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 }
