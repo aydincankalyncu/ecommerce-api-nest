@@ -11,7 +11,6 @@ export class AuthController {
 
     @Post('/signup')
     signUp(@Body() createUserDto: CreateUserDto): Promise<BaseResult> {
-        console.log("Called", createUserDto);
         return this.authService.create(createUserDto);
     }
 

@@ -39,8 +39,6 @@ export class ProductService {
     // Get product by id
     async getProductById(productId: string) : Promise<BaseResult>{
         try {
-            const test = await this.productModel.findById(productId).populate('category').exec();
-            console.log("Test: ", test);
             const product = await  this.productModel.findById(productId).populate('category').exec();
             if(!product){
                 return new ErrorResult("There is no product with this id", productId);
@@ -83,10 +81,17 @@ export class ProductService {
     //Create product
     async createProduct(files: Express.Multer.File[], createProductDto: CreateProductDto): Promise<BaseResult>{
         try {
-            if(files && files.length > 0){
-                const base64Images = files.map((file) => file.buffer.toString('base64'));
-                createProductDto.images = base64Images.join(',');
+            let images = [];
+            if(files && files.length > 0) {
+                for (let index = 0; index < files.length; index++) {
+                    const file = files[index];
+                    images.push(file.originalname);
+                    const imagePath = `uploads/${file.originalname}`;
+                    await this.saveImage(file, imagePath);
+                }
+                
             }
+            createProductDto.images = images.join(',');
             const newProduct = new this.productModel(createProductDto);
             const createdProduct = await newProduct.save();
             return new SuccessResult("Success", createdProduct);
@@ -104,4 +109,16 @@ export class ProductService {
             return new ErrorResult('Error occured on delete product', error);
         }
     }
+
+    private async saveImage(file: Express.Multer.File, imagePath: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+          require('fs').writeFile(imagePath, file.buffer, (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        });
+      }
 }

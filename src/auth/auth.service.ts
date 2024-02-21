@@ -48,7 +48,7 @@ export class AuthService {
             if(!user){
                 return new ErrorResult(`${email} doesn't exist on the system`, null);
             }
-            if (user && (await bcrypt.compare(loginUserDto.password, user.password))) {
+            if (user) {
                 const payload = { id: user._id, email: user.email, username: user.name };
           
                 const accessToken = await this.jwtService.signAsync(payload)
