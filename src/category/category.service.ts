@@ -69,30 +69,26 @@ export class CategoryService {
     file: Express.Multer.File,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<BaseResult> {
-    const { categoryId, categoryName, imageUrl, isActive } = updateCategoryDto;
+    const { categoryId, name, isActive } = updateCategoryDto;
     try {
-      const updatedCategory = await this.categoryModel
-        .findById(categoryId)
-        .exec();
-      if (!updateCategoryDto) {
+      const updatedCategory = await this.categoryModel.findById(categoryId).exec();
+      if (!updateCategoryDto)
+      {
         return new ErrorResult('There is no category with this id', categoryId);
       }
-      if (categoryName) {
-        updatedCategory.name = categoryName;
-      }
-      if(file) 
+      let image = ''; // Resmin adını başlangıçta boş bir string olarak tanımla
+
+      if (file) 
       {
-        const base64Image = file.buffer.toString('base64');
-        updatedCategory.image = base64Image;
-      }
-      if (isActive != null) {
-        updatedCategory.isActive = isActive;
+        const imagePath   = `uploads/${file.originalname}`;
+        image             = imagePath;
+        await this.saveImage(file, imagePath);
       }
 
-      updatedCategory.updatedAt = new Date();
-
-      const updatedCategoryResult = await updatedCategory.save();
-      return new SuccessResult('Success', updatedCategoryResult);
+      const updateFilter  = {name: name, image: image, isActive: isActive}
+      const result        = await this.categoryModel.findOneAndUpdate({name: updatedCategory.name}, updateFilter, {new: true})
+      
+      return new SuccessResult('Success', result);
     } catch (error) {
       return new ErrorResult('Error occured on updating category', error);
     }

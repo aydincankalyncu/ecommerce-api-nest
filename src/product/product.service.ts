@@ -61,18 +61,28 @@ export class ProductService {
 
     //Update product
     async updateProduct(productId: string, files: Express.Multer.File[], updateProductDto: UpdateProductDto): Promise<BaseResult>{
+        const {name, description, images, price, priceWithDiscount, stockAmount} = updateProductDto;
         try {
             const existingProduct = await this.productModel.findById(productId).exec();
-            if(!existingProduct){
+            if(!existingProduct)
+            {
                 return new ErrorResult("There is no product with this id", productId);
             }
+
+            let images = [];
             if(files && files.length > 0) {
-                const images = files.map((file) => file.buffer.toString('base64')).join(',');
-                existingProduct.images = images;
+                for (let index = 0; index < files.length; index++) {
+                    const file = files[index];
+                    images.push(file.originalname);
+                    const imagePath = `uploads/${file.originalname}`;
+                    await this.saveImage(file, imagePath);
+                }
             }
-            Object.assign(existingProduct, updateProductDto);
-            const updatedProduct = await existingProduct.save();
-            return new SuccessResult("Success", updatedProduct);
+
+            const updateFilter  = {name: name, images: images.join(","), price: price, priceWithDiscount: priceWithDiscount, description: description, stockAmount: stockAmount, category: existingProduct.category }
+            const result        = await this.productModel.findOneAndUpdate({name: existingProduct.name}, updateFilter, {new: true})
+
+            return new SuccessResult("Success", result);
         } catch (error) {
             return new ErrorResult("Error occured while updating product", error);
         }

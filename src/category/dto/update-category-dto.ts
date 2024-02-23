@@ -1,6 +1,6 @@
 export class UpdateCategoryDto {
     categoryId: string;
-    categoryName: string;
-    imageUrl: string;
+    name: string;
+    image: string;
     isActive: boolean;
 }
