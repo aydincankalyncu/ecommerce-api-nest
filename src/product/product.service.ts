@@ -91,17 +91,14 @@ export class ProductService {
     //Create product
     async createProduct(files: Express.Multer.File[], createProductDto: CreateProductDto): Promise<BaseResult>{
         try {
-            let images = [];
             if(files && files.length > 0) {
                 for (let index = 0; index < files.length; index++) {
                     const file = files[index];
-                    images.push(file.originalname);
                     const imagePath = `uploads/${file.originalname}`;
                     await this.saveImage(file, imagePath);
                 }
                 
             }
-            createProductDto.images = images.join(',');
             const newProduct = new this.productModel(createProductDto);
             const createdProduct = await newProduct.save();
             return new SuccessResult("Success", createdProduct);
