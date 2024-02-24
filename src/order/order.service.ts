@@ -6,6 +6,7 @@ import { BaseResult } from 'src/utils/result/base-result';
 import { ErrorResult } from 'src/utils/result/error-result';
 import { SuccessResult } from 'src/utils/result/success-result';
 import { CreateOrderDto } from './dto/create-order-dto';
+import { OrderStatus } from 'src/utils/enums';
 
 @Injectable()
 export class OrderService {
@@ -37,6 +38,23 @@ export class OrderService {
             return new SuccessResult("Success", deletedOrder);
         } catch (error) {
             return new ErrorResult("Error occured on delete order", error);
+        }
+    }
+
+    async updateOrderStatus(orderId: string, orderStatus: OrderStatus) : Promise<BaseResult> {
+        try 
+        {
+            const order = await this.orderModel.findById({orderId}).exec();
+            if(!order)
+            {
+                return new ErrorResult("There is no order with this order number", orderId);
+            }
+            const filter = {status: orderStatus};
+            const result = await this.orderModel.findOneAndUpdate(order._id, filter, {new: true});
+            return new SuccessResult("Order status updated.", result);
+        } catch (error) 
+        {
+            return new ErrorResult("Error occured on update order status", error);
         }
     }
 

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument } from "mongoose";
+import { OrderStatus } from "src/utils/enums";
 
 export type OrderDocument = HydratedDocument<Order>;
 
@@ -31,6 +32,9 @@ export class Order {
 
     @Prop()
     confirmationNumber: number
+
+    @Prop({ default: OrderStatus.Pending })
+    status: OrderStatus;
 
     @Prop({default: Date.now})
     createdAt: Date
